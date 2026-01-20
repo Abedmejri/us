@@ -2,8 +2,8 @@
     "name": "two-of-us-monorepo",
     "version": "1.0.0",
     "scripts": {
-        "install-all": "npm install && cd client && npm install && cd ../server && npm install",
-        "build": "cd client && npm run build"
+        "install-all": "npm install && cd client && npm install",
+        "build": "cd client && npm install && npm run build"
     },
     "dependencies": {
         "bcryptjs": "^3.0.3",
