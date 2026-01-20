@@ -50,7 +50,7 @@ app.use('/api/game', require('./routes/game'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/ai', require('./routes/ai'));
 
-// Socket.IO Logic
+// Socket.IO Logic (Note: Will not work on Vercel Serverless)
 io.on('connection', (socket) => {
     socket.on('join_couple', (coupleId) => {
         socket.join(coupleId);
@@ -66,6 +66,11 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 5001;
-server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+// Only listen if not handled by Vercel
+if (process.env.NODE_ENV !== 'production') {
+    server.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+}
+
+module.exports = app;

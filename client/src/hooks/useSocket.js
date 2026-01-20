@@ -7,7 +7,7 @@ const useSocket = (coupleId) => {
     useEffect(() => {
         if (!coupleId) return;
 
-        const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5001';
+        const socketUrl = window.location.origin;
         socketRef.current = io(socketUrl);
 
         socketRef.current.emit('join_couple', coupleId);
