@@ -9,7 +9,7 @@ router.post('/signup', async (req, res) => {
         const { username, password } = req.body;
 
         // Check if user exists
-        const existing = await User.findOne({ where: { username } });
+        const existing = await User.findOne({ username });
         if (existing) return res.status(400).send({ message: 'Username already taken' });
 
         const inviteCode = crypto.randomBytes(3).toString('hex').toUpperCase();
@@ -27,7 +27,7 @@ router.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
         const targetUsername = username === 'isadmin' ? 'admin' : username;
-        const user = await User.findOne({ where: { username: targetUsername } });
+        const user = await User.findOne({ username: targetUsername });
 
         if (!user) {
             return res.status(400).send({ message: 'Invalid credentials' });

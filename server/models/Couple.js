@@ -1,28 +1,25 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db');
+const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 
-const Couple = sequelize.define('Couple', {
+const coupleSchema = new mongoose.Schema({
     id: {
-        type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
-        primaryKey: true,
+        type: String,
+        default: uuidv4,
+        unique: true
     },
     user1Id: {
-        type: DataTypes.UUID,
-        allowNull: false,
+        type: String,
+        required: true
     },
     user2Id: {
-        type: DataTypes.UUID,
-        allowNull: true,
+        type: String,
+        required: true
     },
     status: {
-        type: DataTypes.ENUM('pending', 'active'),
-        defaultValue: 'pending',
-    },
-    anniversary: {
-        type: DataTypes.DATE,
-        allowNull: true,
-    },
-});
+        type: String,
+        enum: ['pending', 'active'],
+        default: 'active'
+    }
+}, { timestamps: true });
 
-module.exports = Couple;
+module.exports = mongoose.model('Couple', coupleSchema);

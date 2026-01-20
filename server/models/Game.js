@@ -1,36 +1,37 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db');
+const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 
-const Game = sequelize.define('Game', {
+const gameSchema = new mongoose.Schema({
     id: {
-        type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
-        primaryKey: true,
+        type: String,
+        default: uuidv4,
+        unique: true
     },
     coupleId: {
-        type: DataTypes.UUID,
-        allowNull: false,
+        type: String,
+        required: true
     },
     creatorId: {
-        type: DataTypes.UUID,
-        allowNull: false,
+        type: String,
+        required: true
     },
     word: {
-        type: DataTypes.STRING,
-        allowNull: false,
+        type: String,
+        required: true
     },
     guesses: {
-        type: DataTypes.JSON, // Use JSON for the array of guesses
-        defaultValue: [],
+        type: Array,
+        default: []
     },
     status: {
-        type: DataTypes.ENUM('active', 'completed'),
-        defaultValue: 'active',
+        type: String,
+        enum: ['active', 'completed'],
+        default: 'active'
     },
     winnerId: {
-        type: DataTypes.UUID,
-        allowNull: true,
-    },
-});
+        type: String,
+        default: null
+    }
+}, { timestamps: true });
 
-module.exports = Game;
+module.exports = mongoose.model('Game', gameSchema);

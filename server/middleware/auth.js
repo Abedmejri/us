@@ -9,7 +9,7 @@ const auth = async (req, res, next) => {
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findByPk(decoded.id);
+        const user = await User.findOne({ id: decoded.id });
 
         if (!user) {
             return res.status(401).send({ error: 'User not found' });
@@ -17,7 +17,7 @@ const auth = async (req, res, next) => {
 
         req.user = user;
         req.token = token;
-        next(); // Pass control to the next middleware
+        next();
     } catch (e) {
         res.status(401).send({ error: 'Authentication failed' });
     }

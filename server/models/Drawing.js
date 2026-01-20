@@ -1,28 +1,24 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db');
+const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 
-const Drawing = sequelize.define('Drawing', {
+const drawingSchema = new mongoose.Schema({
     id: {
-        type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
-        primaryKey: true,
+        type: String,
+        default: uuidv4,
+        unique: true
     },
     coupleId: {
-        type: DataTypes.UUID,
-        allowNull: false,
+        type: String,
+        required: true
     },
     senderId: {
-        type: DataTypes.UUID,
-        allowNull: false,
+        type: String,
+        required: true
     },
     imageData: {
-        type: DataTypes.TEXT, // Using TEXT for Base64 (longer than STRING default)
-        allowNull: false,
-    },
-    reaction: {
-        type: DataTypes.STRING,
-        allowNull: true,
-    },
-});
+        type: String,
+        required: true
+    }
+}, { timestamps: true });
 
-module.exports = Drawing;
+module.exports = mongoose.model('Drawing', drawingSchema);

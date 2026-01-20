@@ -19,11 +19,9 @@ router.post('/', auth, async (req, res) => {
 
 router.get('/', auth, async (req, res) => {
     try {
-        const drawings = await Drawing.findAll({
-            where: { coupleId: req.user.coupleId },
-            order: [['createdAt', 'DESC']],
-            limit: 10
-        });
+        const drawings = await Drawing.find({ coupleId: req.user.coupleId })
+            .sort({ createdAt: -1 })
+            .limit(10);
         res.send(drawings);
     } catch (err) {
         res.status(500).send({ message: err.message });
@@ -32,15 +30,14 @@ router.get('/', auth, async (req, res) => {
 
 router.delete('/:id', auth, async (req, res) => {
     try {
-        const drawing = await Drawing.findByPk(req.params.id);
+        const drawing = await Drawing.findOne({ id: req.params.id });
         if (!drawing) return res.status(404).send({ message: 'Drawing not found' });
 
-        // Only sender, couple partner (if we want), or admin can delete
         if (drawing.senderId !== req.user.id && !req.user.isAdmin) {
             return res.status(403).send({ message: 'Unauthorized' });
         }
 
-        await drawing.destroy();
+        await Drawing.deleteOne({ id: req.params.id });
         res.send({ message: 'Deleted successfully' });
     } catch (err) {
         res.status(500).send({ message: err.message });

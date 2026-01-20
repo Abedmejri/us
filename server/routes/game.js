@@ -19,9 +19,7 @@ router.post('/', auth, async (req, res) => {
 
 router.get('/active', auth, async (req, res) => {
     try {
-        const game = await Game.findOne({
-            where: { coupleId: req.user.coupleId, status: 'active' }
-        });
+        const game = await Game.findOne({ coupleId: req.user.coupleId, status: 'active' });
         res.send(game);
     } catch (err) {
         res.status(500).send({ message: err.message });
@@ -31,7 +29,7 @@ router.get('/active', auth, async (req, res) => {
 router.post('/:id/guess', auth, async (req, res) => {
     try {
         const { guess } = req.body;
-        const game = await Game.findByPk(req.params.id);
+        const game = await Game.findOne({ id: req.params.id });
 
         if (!game || game.status !== 'active') return res.status(404).send({ message: 'No active game' });
 
@@ -69,7 +67,11 @@ router.post('/:id/guess', auth, async (req, res) => {
             status = 'completed';
         }
 
-        await game.update({ guesses: newGuesses, status, winnerId });
+        game.guesses = newGuesses;
+        game.status = status;
+        game.winnerId = winnerId;
+        await game.save();
+
         res.send(game);
     } catch (err) {
         res.status(400).send({ message: err.message });
@@ -78,15 +80,14 @@ router.post('/:id/guess', auth, async (req, res) => {
 
 router.delete('/:id', auth, async (req, res) => {
     try {
-        const game = await Game.findByPk(req.params.id);
+        const game = await Game.findOne({ id: req.params.id });
         if (!game) return res.status(404).send({ message: 'Game not found' });
 
-        // Only creator or admin can delete
         if (game.creatorId !== req.user.id && !req.user.isAdmin) {
             return res.status(403).send({ message: 'Unauthorized' });
         }
 
-        await game.destroy();
+        await Game.deleteOne({ id: req.params.id });
         res.send({ message: 'Deleted' });
     } catch (err) {
         res.status(500).send({ message: err.message });

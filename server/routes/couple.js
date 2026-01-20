@@ -3,20 +3,23 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const User = require('../models/User');
 const Couple = require('../models/Couple');
+const Drawing = require('../models/Drawing');
+const Game = require('../models/Game');
 
 router.get('/me', auth, async (req, res) => {
     try {
         if (!req.user.coupleId) {
             return res.send({ coupled: false, inviteCode: req.user.inviteCode });
         }
-        const couple = await Couple.findByPk(req.user.coupleId);
-        // In a real app we'd join with users, but for now we manually fetch
-        const user1 = await User.findByPk(couple.user1Id);
-        const user2 = await User.findByPk(couple.user2Id);
+        const couple = await Couple.findOne({ id: req.user.coupleId });
+        if (!couple) return res.send({ coupled: false });
+
+        const user1 = await User.findOne({ id: couple.user1Id });
+        const user2 = await User.findOne({ id: couple.user2Id });
 
         res.send({
             coupled: true,
-            couple: { ...couple.toJSON(), user1, user2 }
+            couple: { ...couple.toObject(), user1, user2 }
         });
     } catch (err) {
         res.status(500).send({ message: err.message });
@@ -26,7 +29,7 @@ router.get('/me', auth, async (req, res) => {
 router.post('/join', auth, async (req, res) => {
     try {
         const { inviteCode } = req.body;
-        const partner = await User.findOne({ where: { inviteCode } });
+        const partner = await User.findOne({ inviteCode });
 
         if (!partner) return res.status(404).send({ message: 'Invalid code' });
         if (partner.id === req.user.id) return res.status(400).send({ message: 'No self-love here' });
@@ -38,7 +41,11 @@ router.post('/join', auth, async (req, res) => {
             status: 'active'
         });
 
-        await User.update({ coupleId: couple.id }, { where: { id: [req.user.id, partner.id] } });
+        await User.updateMany({ id: { $in: [req.user.id, partner.id] } }, { coupleId: couple.id });
+
+        // Ensure the req.user object is also updated for the response if needed, 
+        // though usually we just send back the couple data.
+        req.user.coupleId = couple.id;
 
         res.send({ couple });
     } catch (err) {
@@ -46,23 +53,17 @@ router.post('/join', auth, async (req, res) => {
     }
 });
 
-const Drawing = require('../models/Drawing');
-const Game = require('../models/Game');
-
 router.get('/timeline', auth, async (req, res) => {
     try {
         const coupleId = req.user.coupleId;
         if (!coupleId) return res.status(400).send({ message: 'Not coupled' });
 
-        const [drawings, games] = await Promise.all([
-            Drawing.findAll({ where: { coupleId }, order: [['createdAt', 'DESC']], limit: 20 }),
-            Game.findAll({ where: { coupleId }, order: [['createdAt', 'DESC']], limit: 20 })
-        ]);
+        const drawings = await Drawing.find({ coupleId }).sort({ createdAt: -1 }).limit(20);
+        const games = await Game.find({ coupleId }).sort({ createdAt: -1 }).limit(20);
 
-        // Combine and sort
         const timeline = [
-            ...drawings.map(d => ({ ...d.toJSON(), type: 'drawing' })),
-            ...games.map(g => ({ ...g.toJSON(), type: 'game' }))
+            ...drawings.map(d => ({ ...d.toObject(), type: 'drawing' })),
+            ...games.map(g => ({ ...g.toObject(), type: 'game' }))
         ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
         res.send(timeline);
